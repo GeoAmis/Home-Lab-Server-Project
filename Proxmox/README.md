@@ -1,10 +1,10 @@
-# ⚙️ Proxmox Virtualization Platform
-
+# ⚙️ Proxmox
 >This section documents the configuration and role of the Proxmox VE hypervisor in my homelab.
 
 ## 💡 Overview
 
-Proxmox VE is the virtualization backbone of the homelab, running directly on bare metal. It orchestrates lightweight LXC containers (with Docker) and full VMs to manage media, storage, development tools, and monitoring services.
+Proxmox VE is the virtualization backbone of the homelab, running directly on bare metal. It orchestrates lightweight LXC containers (with Docker) and full VMs to manage media, storage, development tools, and monitoring services.<br>
+Because TrueNAS handles long-term and large-scale storage I've passed through the HBA with 4 HDDs to the TrueNAS VM, which manages them in a RAID-Z1 pool. Proxmox accesses shared storage via NFS mounts exported from TrueNAS.
 
 ## 🖥️ System Overview
 
@@ -31,11 +31,11 @@ All LXC containers use the NVMe SSD for their configuration and mount `homelab-d
 | [`code`](CTs/code)             | LXC | Dev tools (VSCode Server, Git, etc.).                                                 | TBD               | `ct-config`<br> `homelab-data`          | 🛠️ Work in Progress |
 | [`home-automation`](CTs/home-automation) | LXC | Home Assistant, ESPHome, Zigbee2MQTT, etc.                                  | TBD               | `ct-config`<br> `homelab-data`          | 🛠️ Work in Progress |
 | [`TrueNAS`](VMs/TrueNAS)       | VM  | ZFS-based NAS with HBA passthrough, exports datasets over NFS/Samba.                  | 4 cores<br> 32GB RAM | Physical disks                 | ✅ Running          |
-| [`Proxmox Backup Server`](VMs/Proxmox-Backup-Server)| VM | Proxmox Backup Server, backs up VMs and CTs to `proxmox-backups`. | 2 cores<br> 8GB RAM  | `proxmox-backups` (NFS from [TrueNAS](VMs/TrueNAS)) |✅ Running          |
+| [`Proxmox Backup Server`](VMs/Proxmox-Backup-Server)| VM | Proxmox Backup Server, backs up VMs and CTs to `proxmox-backups`. | 2 cores<br> 8GB RAM  | `proxmox-backups` (NFS from [TrueNAS](VMs/TrueNAS)) |✅ Running |
 | [`Windows 11`](VMs/Windows11)  | VM  | Desktop OS for remote access and app testing.                                         | 4 cores<br> 8GB RAM  | TBD                            | ✅ Running          |
 | [`Ubuntu`](VMs/Ubuntu)         | VM  | General-purpose Linux environment.                                                    | 2 cores<br> 4GB RAM  | TBD                            | ✅ Running          |
 
-> 🔗 _Each link will eventually point to a detailed page explaining the setup, purpose, Docker Compose (if applicable), and special configs for that container or VM._
+> 🔗 Each entry above will eventually point to a detailed page with full details, including Docker Compose files (for CTs), VM configuration, automation tips, and recovery notes.
 
 ## 🔐 Backup Strategy
 
