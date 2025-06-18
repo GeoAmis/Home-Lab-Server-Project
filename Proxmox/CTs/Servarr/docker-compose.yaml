@@ -1,0 +1,213 @@
+services:
+
+  ####################################################################
+  # 1. Gluetun - VPN Gateway Container
+  #    All containers using "network_mode: service:gluetun"
+  #    will share this container’s VPN connection.
+  ####################################################################
+  gluetun:
+    image: qmcgaw/gluetun
+    container_name: gluetun
+    env_file:
+      - .env  # Loads variables like Wireguard keys and VPN region
+    cap_add:
+      - NET_ADMIN  # Required to manage VPN tunnel interfaces
+    devices:
+      - /dev/net/tun:/dev/net/tun  # TUN device needed for VPN
+    ports:
+      # These ports are exposed through Gluetun for access to services
+      - ${PORT_GLUETUN_CONTROL}:8000
+      - ${PORT_QBITTORRENT_WEBUI}:8080
+      - ${PORT_QBITTORRENT_TCP}:6881/tcp
+      - ${PORT_QBITTORRENT_UDP}:6881/udp
+      - ${PORT_PROWLARR}:9696
+      - ${PORT_SONARR}:8989
+      - ${PORT_RADARR}:7878
+      - ${PORT_BAZARR}:6767
+      - ${PORT_JELLYFIN}:8096
+      - ${PORT_JELLYSEERR}:5055
+      - ${PORT_FLARESOLVERR}:8191
+    # - 3000:3000    # Homepage (optional)
+    volumes:
+      - ${CONFIG_DIR}/gluetun:/gluetun  # Persistent VPN config and logs
+    environment:
+      # VPN setup values loaded from the .env file
+      - VPN_SERVICE_PROVIDER=${VPN_PROVIDER}
+      - VPN_TYPE=${VPN_TYPE}
+      - WIREGUARD_PRIVATE_KEY=${WIREGUARD_PRIVATE_KEY}
+      - SERVER_COUNTRIES=${VPN_COUNTRY}
+      - TZ=${TZ}  # Set container timezone
+      - UPDATER_PERIOD=24h  # Auto-update server list every 24h
+      - HTTP_CONTROL_SERVER_ADDRESS=:8000
+      - HTTP_CONTROL_SERVER_LOG=ON
+
+  ####################################################################
+  # 2. qBittorrent - Torrent client with web UI
+  ####################################################################
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    network_mode: "service:gluetun"  # Routes all traffic through VPN
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - TORRENTING_PORT=6881
+    volumes:
+      - ${CONFIG_DIR}/qbittorrent:/config
+      - ${DATA_DIR}:/data
+    depends_on:
+      - gluetun
+    restart: always
+
+  ####################################################################
+  # 3. Sonarr - TV Show manager and downloader
+  ####################################################################
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    network_mode: "service:gluetun"
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${CONFIG_DIR}/sonarr:/config
+      - ${DATA_DIR}:/data
+    depends_on:
+      - gluetun
+    restart: unless-stopped
+
+  ####################################################################
+  # 4. Prowlarr - Indexer manager for Sonarr/Radarr
+  ####################################################################
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    network_mode: "service:gluetun"
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${CONFIG_DIR}/prowlarr:/config
+    depends_on:
+      - gluetun
+    restart: unless-stopped
+
+  ####################################################################
+  # 5. Radarr - Movie manager and downloader
+  ####################################################################
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    network_mode: "service:gluetun"
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${CONFIG_DIR}/radarr:/config
+      - ${DATA_DIR}:/data
+    depends_on:
+      - gluetun
+    restart: unless-stopped
+
+  ####################################################################
+  # 6. Bazarr - Subtitle downloader
+  ####################################################################
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    network_mode: "service:gluetun"
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${CONFIG_DIR}/bazarr:/config
+      - ${DATA_DIR}:/data
+    depends_on:
+      - gluetun
+    restart: unless-stopped
+
+  ####################################################################
+  # 7. Jellyfin - Media server for streaming your content
+  ####################################################################
+  jellyfin:
+    image: jellyfin/jellyfin
+    container_name: jellyfin
+    network_mode: "service:gluetun"
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - ${CONFIG_DIR}/jellyfin/config:/config
+      - ${CONFIG_DIR}/jellyfin/cache:/cache
+      - ${DATA_DIR}:/data
+    depends_on:
+      - gluetun
+    restart: unless-stopped
+
+  ####################################################################
+  # 8. Jellyseerr - Media request app for Jellyfin
+  ####################################################################
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
+    container_name: jellyseerr
+    network_mode: "service:gluetun"
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${CONFIG_DIR}/jellyseerr:/app/config
+    depends_on:
+      - gluetun
+    restart: unless-stopped
+
+  ####################################################################
+  # 9. FlareSolverr - Captcha and bot protection helper
+  ####################################################################
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    network_mode: "service:gluetun"
+    environment:
+      - LOG_LEVEL=info
+      - LOG_HTML=false
+      - CAPTCHA_SOLVER=none
+      - TZ=${TZ}
+    volumes:
+      - ${CONFIG_DIR}/flaresolverr/config:/app/config
+      - ${CONFIG_DIR}/flaresolverr/logs:/app/logs
+    depends_on:
+      - gluetun
+    restart: unless-stopped
+    
+  ####################################################################
+  # 10. Homepage - Dashboard for all services
+  ####################################################################
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    volumes:
+      - ${CONFIG_DIR}/homepage:/app/config
+      - /var/run/docker.sock:/var/run/docker.sock:ro  # Optional: show running containers
+    environment:
+      - HOMEPAGE_ALLOWED_HOSTS=${HOMEPAGE_ALLOWED_HOSTS}
+    ports:
+      - ${PORT_HOMEPAGE}:3000  # Web UI
+    networks:
+      - proxy  # External proxy network for public access (e.g. via reverse proxy)
+    restart: unless-stopped
+
+####################################################################
+# External Docker Network for Homepage or reverse proxy
+####################################################################
+networks:
+  proxy:
+    external: true  # Created outside this file (e.g., for NGINX Proxy Manager)
