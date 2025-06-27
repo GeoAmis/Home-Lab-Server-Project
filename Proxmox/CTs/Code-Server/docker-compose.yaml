@@ -1,0 +1,31 @@
+services:
+  ####################################################################
+  # code-server - VS Code in the browser
+  ####################################################################
+  code-server:
+    image: lscr.io/linuxserver/code-server:latest
+    container_name: code-server
+    # Environment variables for user permissions, timezone, and UI setup
+    environment:
+      - PUID=${PUID} # User ID to run as
+      - PGID=${PGID} # Group ID to run as
+      - TZ=${TZ} # Set container timezone
+      - PASSWORD=${PASSWORD} # Password for web login (optional)
+      #- HASHED_PASSWORD= #optional
+      #- SUDO_PASSWORD=password #optional
+      #- SUDO_PASSWORD_HASH= #optional
+      - PROXY_DOMAIN=${PROXY_DOMAIN} # Domain name for reverse proxy (optional)
+      - DEFAULT_WORKSPACE=${DEFAULT_WORKSPACE} # Default project directory (optional)
+      - PWA_APPNAME=${PWA_APPNAME} # Name for the Progressive Web App (optional)
+    # Mount configuration and workspace directories
+    volumes:
+      - ${CONFIG_PATH}:/config # Container config and extensions
+      - ${WORKSPACE_PATH}:${DEFAULT_WORKSPACE} # Project files directory
+    # Port exposed for accessing the code-server UI
+    ports:
+      - ${CODE_SERVER_PORT}:8443  # Expose code-server web UI over HTTPS
+    restart: unless-stopped  # Always restart unless manually stopped
+
+networks:
+  proxy:
+    external: true # Shared reverse proxy network (e.g., NGINX Proxy Manager)
