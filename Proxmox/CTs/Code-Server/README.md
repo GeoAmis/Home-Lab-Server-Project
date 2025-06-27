@@ -26,13 +26,15 @@ This container uses a `.env` file for dynamic configuration. Customize the value
 | `WORKSPACE_PATH`    | Host directory containing your code projects |
 | `DEFAULT_WORKSPACE` | Default open folder inside container |
 | `CODE_SERVER_PORT`  | Port for accessing the UI |
+| `PROXY_DOMAIN`  | Domain for reverse proxy (e.g., `code.domain.com`) |
 
 ### Optional:
 
 | Variable        | Description |
 |-----------------|-------------|
-| `PROXY_DOMAIN`  | Domain for reverse proxy (e.g., `code.domain.com`) |
 | `PWA_APPNAME`   | Name shown for Progressive Web App installs |
+| `HASHED_PASSWORD` | Pre-hashed login password using bcrypt |
+| `SUDO_PASSWORD` / `SUDO_PASSWORD_HASH` | Set for enabling sudo access in the container |
 
 ## 📁 Folder Mapping
 
@@ -63,7 +65,9 @@ docker compose down      # Stop and remove the container
 ```
 
 ## 🧠 Tips
-* Code-server persists all settings and extensions in the /config directory.
+* Code-server persists all settings and extensions in the `/config` directory.
 * The workspace folder maps directly to your host project directory.
+* Easy `.env` configuration for quick stack changes
 * You can install any VS Code extension from the Marketplace as usual.
 * Use reverse proxy auth (like Authelia or OAuth2) for more secure access control.
+* Prefer `HASHED_PASSWORD` over plaintext `PASSWORD`
