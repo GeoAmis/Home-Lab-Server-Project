@@ -1,0 +1,24 @@
+services:
+##################################
+#📈 Beszel - Log Viewer Service #
+##################################
+  beszel:
+    image: henrygd/beszel
+    container_name: beszel # Custom container name
+    restart: unless-stopped # Automatically restart unless manually stopped
+    ports:
+      - "${BESZEL_PORT}:8090" # Host:Container port mapping from .env
+    volumes:
+      - ${BESZEL_DATA_PATH}:/beszel_data # Persist Beszel data to host
+  ######################################
+  #🟢 Uptime Kuma - Monitoring Service #
+  ######################################
+  uptime-kuma:
+    image: louislam/uptime-kuma:latest
+    container_name: uptime-kuma # Custom container name
+    restart: unless-stopped # Automatically restart unless manually stopped
+    ports:
+      - "${UPTIME_KUMA_PORT}:3001" # Host:Container port mapping from .env
+    volumes:
+      - ${UPTIME_KUMA_DATA_PATH}:/app/data # Persist Uptime Kuma data to host
+      - /var/run/docker.sock:/var/run/docker.sock # Enable Docker socket access for container monitoring
