@@ -26,7 +26,7 @@ This container uses a `.env` file for dynamic configuration. Customize the value
 | `WORKSPACE_PATH`    | Host directory containing your code projects |
 | `DEFAULT_WORKSPACE` | Default open folder inside container |
 | `CODE_SERVER_PORT`  | Port for accessing the UI |
-| `PROXY_DOMAIN`  | Domain for reverse proxy (e.g., `code.domain.com`) |
+| `PROXY_DOMAIN`      | Your domain (e.g., `code.yourdomain.com`) for reverse proxy setup |
 
 ### Optional:
 
@@ -45,18 +45,13 @@ This container uses a `.env` file for dynamic configuration. Customize the value
 
 > Ensure both host paths are created and owned by the correct PUID/PGID before deploying.
 
-## 🌐 Accessing the Code Editor
-
-Once deployed, access the code-server UI at:<br>
-`https://<CT-IP>:${CODE_SERVER_PORT}`
-
-If using a reverse proxy:<br>
-`https://${PROXY_DOMAIN}`
-
-> 🔐 Place behind a reverse proxy with HTTPS and external authentication if exposing to the internet.
+## ⚙️ Requirements
+- [Docker](https://docs.docker.com/get-docker/)
+- [Docker Compose](https://docs.docker.com/compose/)<br>
+- [Portainer (optional)](https://www.portainer.io/) – A web-based Docker management UI. You can use this to visually manage containers and volumes.
+> Make sure they are installed before proceeding.
 
 ## 📦 Deploy Instructions
-
 From the same directory as your `docker-compose.yaml`:
 ```
 docker compose pull       # Fetch the latest image
@@ -64,10 +59,18 @@ docker compose up -d     # Start the service in the background
 docker compose down      # Stop and remove the container
 ```
 
+## 🌐 Accessing the Code Editor
+Once deployed, access the code-server UI at:<br>
+`https://<CT-IP>:${CODE_SERVER_PORT}`<br>
+If using a reverse proxy:<br>
+`https://${PROXY_DOMAIN}`
+> 🔐 Place behind a reverse proxy with HTTPS and external authentication if exposing to the internet.
+
 ## 🧠 Tips
-* Code-server persists all settings and extensions in the `/config` directory.
+* All settings, extensions, and user data persist in the `/config` directory.
 * The workspace folder maps directly to your host project directory.
-* Easy `.env` configuration for quick stack changes
-* You can install any VS Code extension from the Marketplace as usual.
-* Use reverse proxy auth (like Authelia or OAuth2) for more secure access control.
-* Prefer `HASHED_PASSWORD` over plaintext `PASSWORD`
+* Use `.env` to easily customize ports, paths, and credentials.
+* Mount your real project folder as the workspace for seamless editing.
+* Prefer `HASHED_PASSWORD` over `PASSWORD` for stronger security.
+* Enable `SUDO_PASSWORD` if you need root privileges inside the container.
+* Use a reverse proxy to enforce HTTPS and centralize authentication.
